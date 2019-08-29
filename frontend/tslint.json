@@ -23,6 +23,8 @@
     "only-arrow-functions": false,
     "semicolon": [true, "never"],
     "ter-arrow-parens": false,
+    "import-name": false,
+    "function-name": false,
     "variable-name": [true, "ban-keywords", "allow-leading-underscore", "allow-snake-case", "allow-trailing-underscore"]
   }
 }

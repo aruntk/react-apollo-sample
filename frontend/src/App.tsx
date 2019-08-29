@@ -1,26 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
+import { gql } from 'apollo-boost'
+import { useQuery } from '@apollo/react-hooks'
 
-const App: React.FC = () => {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const GET_HELLO_WORLD = gql`
+  query {
+    hello
+  }
+`
+interface HelloWorldData {
+  hello: string
 }
 
-export default App;
+/**
+ * Helloworld functional component
+ */
+function HelloWorld() {
+  const { loading, data, error } = useQuery<HelloWorldData, {}>(
+    GET_HELLO_WORLD,
+  )
+  if (loading) {
+    return <div>Loading...</div>
+  }
+  if (error) {
+    return <div>Error :(</div>
+
+  }
+  return (
+    <div>{data ? data.hello : ''}</div>
+  )
+}
+
+export default HelloWorld
