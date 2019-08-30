@@ -8,7 +8,7 @@ import { log } from './utils/log'
 
 const { Column } = Table
 
-const GET_HELLO_WORLD = gql`
+const GET_CATEGORIES_AND_KEYWORDS = gql`
 query {
   keywords {
     id
@@ -31,17 +31,17 @@ interface CategoryInterface {
   name: string
 }
 
-interface HelloWorldData {
+interface AppData {
   keywords: KeywordInterface[]
   categories: CategoryInterface[]
 }
 
 /**
- * Helloworld functional component
+ * App functional component
  */
-function HelloWorld() {
-  const { loading, data, error } = useQuery<HelloWorldData, {}>(
-    GET_HELLO_WORLD,
+function App() {
+  const { loading, data, error } = useQuery<AppData, {}>(
+    GET_CATEGORIES_AND_KEYWORDS,
   )
   if (loading) {
     return <div>Loading...</div>
@@ -93,7 +93,7 @@ function HelloWorld() {
     }
     return (
       <span>
-        <a onClick={handleCategoryDelete}>Delete</a>
+        <Button onClick={handleCategoryDelete}>Delete</Button>
       </span>
     )
   }
@@ -115,4 +115,4 @@ function HelloWorld() {
   )
 }
 
-export default HelloWorld
+export default App
