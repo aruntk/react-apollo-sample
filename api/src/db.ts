@@ -8,8 +8,8 @@ interface KeywordInterface {
 }
 let KEYWORDS: KeywordInterface[] = []
 const k = [['audi', 'bmw', 'tires'], ['bianchi'], ['banana', 'avocado'], ['cat', 'dog', 'otter'], ['tea', 'water']]
+let j = 1
 k.forEach((keywordGroups, i) => {
-  let j = 1
   keywordGroups.forEach((name) => {
     KEYWORDS.push({
       id: j,
@@ -52,11 +52,16 @@ export function deleteCategory ({ id }: { id: number }) {
   CATEGORIES = CATEGORIES.filter(category => (category.id !== id))
 }
 
-export function getKeywords (categoryId: number) {
+export function getKeywordForCategory (categoryId: number) {
   return KEYWORDS.filter((keyword) => {
     return keyword.categoryId === categoryId
   })
 }
+
+export function getKeywords () {
+  return KEYWORDS
+}
+
 
 export function addNewKeyword ({ name }: { name: string }) {
   const category = {
