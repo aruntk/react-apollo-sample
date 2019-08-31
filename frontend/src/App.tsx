@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@apollo/react-hooks'
-import { Table, Tag, Button, Input, Popover, Popconfirm } from 'antd'
+import { Table, Tag, Button, Input, Popover, Popconfirm, message } from 'antd'
 import 'antd/dist/antd.min.css'
 import './flex.css'
 import { GET_CATEGORIES_AND_KEYWORDS, ADD_KEYWORD, ADD_CATEGORY, DELETE_KEYWORD, DELETE_CATEGORY } from './graphql'
@@ -44,6 +44,9 @@ function App() {
           query: GET_CATEGORIES_AND_KEYWORDS,
           data: { categories: categories.concat([addCategory]) },
         })
+      },
+      onError(error) {
+        message.error(error.message) 
       }
     }
   )
@@ -56,6 +59,9 @@ function App() {
           query: GET_CATEGORIES_AND_KEYWORDS,
           data: { categories: categories.filter((category) => category.id !== deleteCategory ) },
         })
+      },
+      onError(error) {
+        message.error(error.message) 
       }
     }
   )
@@ -80,6 +86,9 @@ function App() {
           query: GET_CATEGORIES_AND_KEYWORDS,
           data: { categories: mutatedCategories },
         })
+      },
+      onError(error) {
+        message.error(error.message) 
       }
     }
   )
@@ -105,8 +114,10 @@ function App() {
         cache.writeQuery({
           query: GET_CATEGORIES_AND_KEYWORDS,
           data: { categories: mutatedCategories },
-        })
-     
+        }) 
+      },
+      onError(error) {
+        message.error(error.message) 
       }
     }
   )
