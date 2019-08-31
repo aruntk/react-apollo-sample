@@ -1,39 +1,27 @@
-import React from 'react'
-import { gql } from 'apollo-boost'
-import { useQuery } from '@apollo/react-hooks'
-import { groupBy } from 'lodash'
-import { Table, Tag, Button } from 'antd'
+import React, { useState } from 'react'
+import { useQuery, useMutation } from '@apollo/react-hooks'
+import { Table, Tag, Button, Input, Popover } from 'antd'
 import 'antd/dist/antd.min.css'
-import { log } from './utils/log'
+import './flex.css'
+import { GET_CATEGORIES_AND_KEYWORDS, ADD_KEYWORD, ADD_CATEGORY, DELETE_KEYWORD, DELETE_CATEGORY } from './graphql'
 
 const { Column } = Table
 
-const GET_CATEGORIES_AND_KEYWORDS = gql`
-query {
-  keywords {
-    id
-    name
-    categoryId
-  }
-  categories {
-    id
-    name
-  }
-}
-`
 interface KeywordInterface {
-  id: number
+  id: string
   name: string
-  categoryId: number
+  category: CategoryInterface
 }
 interface CategoryInterface {
-  id: number
+  id: string
   name: string
-}
-
-interface AppData {
   keywords: KeywordInterface[]
+}
+interface AppData {
   categories: CategoryInterface[]
+}
+interface CategoriesWithKey extends CategoryInterface {
+  key: string
 }
 
 /**
@@ -43,6 +31,82 @@ function App() {
   const { loading, data, error } = useQuery<AppData, {}>(
     GET_CATEGORIES_AND_KEYWORDS,
   )
+  const [addCategory] = useMutation(
+    ADD_CATEGORY,
+    {
+      update(cache: any, { data: { addCategory } }) {
+        const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
+        cache.writeQuery({
+          query: GET_CATEGORIES_AND_KEYWORDS,
+          data: { categories: categories.concat([addCategory]) },
+        })
+      }
+    }
+  )
+  const [deleteCategory] = useMutation(
+    DELETE_CATEGORY,
+    {
+      update(cache: any, { data: { deleteCategory } }) {
+        const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
+        cache.writeQuery({
+          query: GET_CATEGORIES_AND_KEYWORDS,
+          data: { categories: categories.filter((category) => category.id !== deleteCategory ) },
+        })
+      }
+    }
+  )
+
+  const [addKeyword] = useMutation(
+    ADD_KEYWORD,
+    {
+      update(cache: any, { data: { addKeyword } }) {
+        const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
+        const mutatedCategories = categories.map((category) => {
+          if(category.id === addKeyword.category.id) {
+            return {
+              ...category,
+              keywords: [...category.keywords, addKeyword]
+            }
+          }
+          return category
+        })
+        cache.writeQuery({
+          query: GET_CATEGORIES_AND_KEYWORDS,
+          data: { categories: mutatedCategories },
+        })
+      }
+    }
+  )
+
+  const [deleteKeyword] = useMutation(
+    DELETE_KEYWORD,
+    {
+      update(cache: any, { data: { deleteKeyword } }) {
+        const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
+        const mutatedCategories = categories.map((category) => {
+          if(category.id === deleteKeyword.category.id) {
+            const keywords = category.keywords.filter((keyword) => {
+              return keyword.id !== deleteKeyword.id
+            })
+            return {
+              ...category,
+              keywords
+            }
+          }
+          return category
+        })
+        cache.writeQuery({
+          query: GET_CATEGORIES_AND_KEYWORDS,
+          data: { categories: mutatedCategories },
+        })
+     
+      }
+    }
+  )
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newKeywordName, setNewKeywordName] = useState('')
+  const [newKeywordCategory, setNewKeywordCategory] = useState('')
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -50,25 +114,16 @@ function App() {
     return <div>Error :(</div>
 
   }
-  const keywords = data ? data.keywords : []
-  const categories = data ? data.categories : []
-  const keywordGroups = groupBy(keywords, 'categoryId')
-  interface CategoriesWithKeywords {
-    id: number
-    name: string
-    key: number
-    keywords: KeywordInterface[]
-  }
-  const categoriesWithKeywords: CategoriesWithKeywords[] = categories.map((category) => {
+  const categories: CategoryInterface[] = data ? data.categories : []
+  const categoriesWithKey: CategoriesWithKey[] = categories.map((category) => {
     return {
       ...category,
       key: category.id,
-      keywords: keywordGroups[category.id] || []
     }
   })
   const renderKeyword = (keyword: KeywordInterface) => {
-    const handleKeywordDelete = (e: any) => {
-      log(keyword)
+    const handleKeywordDelete = () => {
+      deleteKeyword({ variables: { keywordId: keyword.id } })
     }
     return (
       <Tag color="blue" key={keyword.id} closable={true} onClose={handleKeywordDelete} >
@@ -76,20 +131,42 @@ function App() {
       </Tag>
     )
   }
-  const renderKeywords = (_keywords: KeywordInterface[], record: CategoriesWithKeywords) => {
+  const handleAddKeywordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewKeywordName(e.target.value)
+  }
+  const handleAddKeywordButtonClick = () => {
+    if (newKeywordName && newKeywordCategory) {
+      addKeyword({ variables: { keywordName: newKeywordName, categoryId: newKeywordCategory } })
+    }
+    setNewKeywordName('')
+  }
+  const addKeywordPopoverContent = (
+    <div className="horizontal layout">
+      <Input onChange={handleAddKeywordInputChange} placeholder="Add new keyword" value={newKeywordName} />
+      <Button type="primary" onClick={handleAddKeywordButtonClick}>Add Keyword</Button>
+    </div>
+  )
+  const handleAddKeywordPopoverVisibleChange = (visible: boolean) => {
+    if (!visible) {
+      setNewKeywordCategory('')
+    }
+  }
+  const renderKeywords = (_keywords: KeywordInterface[], record: CategoriesWithKey) => {
     const handleAddKeyword = () => {
-      log(record)
+      setNewKeywordCategory(record.id)
     }
     return (
       <span>
         {_keywords.map(renderKeyword)}
-        <Button type="primary" shape="circle" icon="plus" size="small" onClick={handleAddKeyword} />
+        <Popover content={addKeywordPopoverContent} title="Title" trigger="click" onVisibleChange={handleAddKeywordPopoverVisibleChange} >
+          <Button type="primary" shape="circle" icon="plus" size="small" onClick={handleAddKeyword} />
+        </Popover>
       </span>
     )
   }
-  const renderDelete = (text: string, record: CategoriesWithKeywords) => {
+  const renderDelete = (text: string, record: CategoriesWithKey) => {
     const handleCategoryDelete = () => {
-      log(record)
+      deleteCategory({ variables: { categoryId: record.id } })
     }
     return (
       <span>
@@ -97,21 +174,34 @@ function App() {
       </span>
     )
   }
+  const handleAddCategory = () => {
+    addCategory({ variables: { categoryName: newCategoryName } })
+    setNewCategoryName('')
+  }
+  const handleAddCategoryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewCategoryName(e.target.value)
+  }
   return (
-    <Table dataSource={categoriesWithKeywords}>
-      <Column title="Category" dataIndex="name" key="name" />
-      <Column
-        title="Keywords"
-        dataIndex="keywords"
-        key="keywords"
-        render={renderKeywords}
-      />
-      <Column
-        title="Action"
-        key="action"
-        render={renderDelete}
-      />
-    </Table>
+    <div className="vertical layout center center-justified">
+      <Table dataSource={categoriesWithKey}>
+        <Column title="Category" dataIndex="name" key="name" />
+        <Column
+          title="Keywords"
+          dataIndex="keywords"
+          key="keywords"
+          render={renderKeywords}
+        />
+        <Column
+          title="Action"
+          key="action"
+          render={renderDelete}
+        />
+      </Table>
+      <div className="horizontal layout">
+        <Input onChange={handleAddCategoryInputChange} placeholder="Add new category" value={newCategoryName} />
+        <Button type="primary" onClick={handleAddCategory}>Add Category</Button>
+      </div>
+    </div>
   )
 }
 
