@@ -25,6 +25,7 @@ interface CategoriesWithKey extends CategoryInterface {
 }
 
 const deleteText = 'Are you sure to delete this?'
+let addKeywordInput: any = null
 
 /**
  * App functional component
@@ -140,7 +141,7 @@ function App() {
   const handleAddKeywordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewKeywordName(e.target.value)
   }
-  const handleAddKeywordButtonClick = () => {
+  const handleAddKeyword = () => {
     if (newKeywordName && newKeywordCategory) {
       addKeyword({ variables: { keywordName: newKeywordName, categoryId: newKeywordCategory } })
     }
@@ -149,18 +150,30 @@ function App() {
   }
   const addKeywordPopoverContent = (
     <div className="horizontal layout">
-      <Input onChange={handleAddKeywordInputChange} placeholder="Enter keyword" value={newKeywordName} />
-      <Button type="primary" onClick={handleAddKeywordButtonClick}>Add Keyword</Button>
+      <Input
+        onChange={handleAddKeywordInputChange} 
+        placeholder="Enter keyword" 
+        value={newKeywordName} 
+        onPressEnter={handleAddKeyword} 
+        ref={(input) => { addKeywordInput = input }}
+      />
     </div>
   )
   const handleAddKeywordPopoverVisibleChange = (visible: boolean) => {
     if (!visible) {
       // if the popover is closed reset the keyword category id
       setNewKeywordCategory('')
+    } else {
+      // defer focus until the element is rendered
+      setTimeout(() => {
+        if (addKeywordInput) {
+          addKeywordInput.focus()
+        }
+      }, 100)
     }
   }
   const renderKeywords = (_keywords: KeywordInterface[], record: CategoriesWithKey) => {
-    const handleAddKeyword = () => {
+    const handleAddKeywordButtonClick = () => {
       setNewKeywordCategory(record.id)
     }
     return (
@@ -172,7 +185,7 @@ function App() {
           title="Add new keyword"
           onVisibleChange={handleAddKeywordPopoverVisibleChange}
         >
-          <Button type="primary" shape="circle" icon="plus" size="small" onClick={handleAddKeyword} />
+          <Button type="primary" shape="circle" icon="plus" size="small" onClick={handleAddKeywordButtonClick} />
         </Popover>
       </span>
     )
@@ -213,7 +226,12 @@ function App() {
         />
       </Table>
       <div className="horizontal layout">
-        <Input onChange={handleAddCategoryInputChange} placeholder="Add new category" value={newCategoryName} />
+        <Input
+          onChange={handleAddCategoryInputChange}
+          placeholder="Add new category"
+          value={newCategoryName}
+          onPressEnter={handleAddCategory}
+        />
         <Button type="primary" onClick={handleAddCategory}>Add Category</Button>
       </div>
     </div>
