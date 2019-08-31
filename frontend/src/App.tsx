@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@apollo/react-hooks'
-import { Table, Tag, Button, Input, Popover } from 'antd'
+import { Table, Tag, Button, Input, Popover, Popconfirm } from 'antd'
 import 'antd/dist/antd.min.css'
 import './flex.css'
 import { GET_CATEGORIES_AND_KEYWORDS, ADD_KEYWORD, ADD_CATEGORY, DELETE_KEYWORD, DELETE_CATEGORY } from './graphql'
@@ -23,6 +23,8 @@ interface AppData {
 interface CategoriesWithKey extends CategoryInterface {
   key: string
 }
+
+const deleteText = 'Are you sure to delete this?'
 
 /**
  * App functional component
@@ -147,7 +149,7 @@ function App() {
   }
   const addKeywordPopoverContent = (
     <div className="horizontal layout">
-      <Input onChange={handleAddKeywordInputChange} placeholder="Add new keyword" value={newKeywordName} />
+      <Input onChange={handleAddKeywordInputChange} placeholder="Enter keyword" value={newKeywordName} />
       <Button type="primary" onClick={handleAddKeywordButtonClick}>Add Keyword</Button>
     </div>
   )
@@ -162,9 +164,14 @@ function App() {
       setNewKeywordCategory(record.id)
     }
     return (
-      <span>
+      <span key={record.id}>
         {_keywords.map(renderKeyword)}
-        <Popover content={addKeywordPopoverContent} title="Title" trigger="click" onVisibleChange={handleAddKeywordPopoverVisibleChange} >
+        <Popover
+          content={addKeywordPopoverContent}
+          trigger="click"
+          title="Add new keyword"
+          onVisibleChange={handleAddKeywordPopoverVisibleChange}
+        >
           <Button type="primary" shape="circle" icon="plus" size="small" onClick={handleAddKeyword} />
         </Popover>
       </span>
@@ -175,8 +182,10 @@ function App() {
       deleteCategory({ variables: { categoryId: record.id } })
     }
     return (
-      <span>
-        <Button onClick={handleCategoryDelete}>Delete</Button>
+      <span key={record.id}>
+        <Popconfirm placement="topLeft" title={deleteText} onConfirm={handleCategoryDelete} okText="Yes" cancelText="No">
+          <Button size="small">Delete</Button>
+        </Popconfirm>
       </span>
     )
   }
