@@ -160,16 +160,14 @@ function App() {
     setNewKeywordName('')
   }
   const addKeywordPopoverContent = (
-    <div className="horizontal layout">
-      <Input
-        onChange={handleAddKeywordInputChange} 
-        placeholder="Enter keyword" 
-        value={newKeywordName} 
-        onPressEnter={handleAddKeyword} 
-        ref={(input) => { addKeywordInput = input }}
-      />
-    </div>
-  )
+    <Input
+      onChange={handleAddKeywordInputChange} 
+      placeholder="Enter keyword" 
+      value={newKeywordName} 
+      onPressEnter={handleAddKeyword} 
+      ref={(input) => { addKeywordInput = input }}
+    />
+    )
   const handleAddKeywordPopoverVisibleChange = (visible: boolean) => {
     if (!visible) {
       // if the popover is closed reset the keyword category id
