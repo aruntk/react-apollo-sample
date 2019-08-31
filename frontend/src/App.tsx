@@ -34,6 +34,7 @@ function App() {
   const [addCategory] = useMutation(
     ADD_CATEGORY,
     {
+      // return of addCategory is newly added category
       update(cache: any, { data: { addCategory } }) {
         const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
         cache.writeQuery({
@@ -59,10 +60,12 @@ function App() {
   const [addKeyword] = useMutation(
     ADD_KEYWORD,
     {
+      // return of addKeyword is { id: string, category: { id: string } }
       update(cache: any, { data: { addKeyword } }) {
         const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
         const mutatedCategories = categories.map((category) => {
           if(category.id === addKeyword.category.id) {
+            // add the new keyword to the category cache
             return {
               ...category,
               keywords: [...category.keywords, addKeyword]
@@ -85,6 +88,7 @@ function App() {
         const { categories }: { categories: CategoryInterface[] } = cache.readQuery({ query: GET_CATEGORIES_AND_KEYWORDS })
         const mutatedCategories = categories.map((category) => {
           if(category.id === deleteKeyword.category.id) {
+            // remove the deleted keyword from cache
             const keywords = category.keywords.filter((keyword) => {
               return keyword.id !== deleteKeyword.id
             })
@@ -138,6 +142,7 @@ function App() {
     if (newKeywordName && newKeywordCategory) {
       addKeyword({ variables: { keywordName: newKeywordName, categoryId: newKeywordCategory } })
     }
+    // reset keyword name once the add button is clicked
     setNewKeywordName('')
   }
   const addKeywordPopoverContent = (
@@ -148,6 +153,7 @@ function App() {
   )
   const handleAddKeywordPopoverVisibleChange = (visible: boolean) => {
     if (!visible) {
+      // if the popover is closed reset the keyword category id
       setNewKeywordCategory('')
     }
   }
